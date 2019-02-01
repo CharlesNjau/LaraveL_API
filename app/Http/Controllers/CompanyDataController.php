@@ -5,8 +5,11 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use\App\http\Requests;
+//use \App\Http\Controllers\Validator;
+use Illuminate\Support\Facades\Validator;
 use App\CompanyData;
 use App\Http\Resources\CompanyData as CompanyDataResource;
+
 use Faker\Provider\ru_RU\Company;
 
 class CompanyDataController extends Controller
@@ -35,15 +38,28 @@ class CompanyDataController extends Controller
     public function store(Request $request)
     {
         //
-        $method = $request->method();
-        $first_name=$request->input('first_name');
-        $last_name=$request->input('last_name');
-        $company_bio=$request->input('company_bio');
-        $title=$request->input('title');
-        $web_site=$request->input('web_site');
-       
+        $data=$request->toArray();
+        $valid=Validator::make($data,[
+            'first_name' => 'required|string',
+            'last_name' => 'required|string',
+            'company_bio' => 'required|string',
+            'title' => 'required|string',
+            'web_site' => 'required|string|url'
+        ]);
 
-        if ($request->isMethod('post')) {
+       if ($request->isMethod('post') && $valid->fails()) {
+          
+       return json_encode(array("Status"=>$valid->fails(),"Error"=>$valid->messages()));
+           
+    }
+        else{
+           
+            $method = $request->method();
+            $first_name=$request->input('first_name');
+            $last_name=$request->input('last_name');
+            $company_bio=$request->input('company_bio');
+            $title=$request->input('title');
+            $web_site=$request->input('web_site');
             //
             $Message= array(
                 'Success' =>'Data Inserted successfully!',
@@ -57,7 +73,9 @@ class CompanyDataController extends Controller
                 )
            );
 
-       
+           //return json_encode($Message);
+           //return response()->json($Message, 201);
+
             
             DB::table('company_datas')->insert(
                 ['first_name' => $first_name,
@@ -68,11 +86,8 @@ class CompanyDataController extends Controller
                  ]
             );
             return json_encode($Message);
-           
-        }
-        else{
-            $message=array('Error'=>'Method Not allowed');
-            return json_encode($message);
+
+            
 
         }
 
